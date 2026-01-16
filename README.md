@@ -5,7 +5,7 @@ A console application for managing and comparing bank cashbacks.
 ## 🚀 Quick Start
 
 ```bash
-python cashback.py
+python cashback_manager.py
 ```
 
 ## 📋 Features
