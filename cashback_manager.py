@@ -74,7 +74,6 @@ class ConsoleCashbackApp:
                 print("The cashback cannot be empty.")
                 continue
 
-            # Check if such a cashback already exists
             if self.bank_exists(bank, cashback):
                 print(f"Cashback '{cashback}' is already in the {bank}")
 
@@ -130,7 +129,6 @@ class ConsoleCashbackApp:
                 print(f"Current percent: {cashback[category]}%")
                 print("-" * 40)
 
-                # Change rate
                 change_percent: str = input("Change rate? (yes/no): ").lower()
                 if change_percent in self.confirmations:
                     is_changed = True
