@@ -1,317 +1,97 @@
+from dataclasses import dataclass
 import json
 import os
 
 
-class ConsoleCashbackApp:
-    def __init__(self, filename: str):
-        self.filename = f"{filename}.json"
-        self.cashbacks: dict = self.load_data()
-        self.confirmations: list[str] = ["yes", "y"]
+@dataclass
+class Cashback:
+    name: str
+    percent: float
 
-    def load_data(self) -> dict:
+
+class DataStorage:
+    def __init__(self, filename: str):
+        self.filename = filename
+        self.data = self.load()
+
+    def load(self):
         if os.path.exists(self.filename):
             try:
                 with open(self.filename, "r", encoding="utf-8") as f:
                     return json.load(f)
-            except OSError:
-                return {}
+            except (json.JSONDecodeError, OSError):
+                pass
         return {}
 
-    def save_data(self) -> None:
+    def save(self):
         try:
             with open(self.filename, "w", encoding="utf-8") as f:
-                json.dump(self.cashbacks, f, indent=2, ensure_ascii=False)
-        except Exception as e:
-            print(
-                f"Error saving to file {self.filename}: {type(e).__name__} - {str(e)}"
-            )
-            try:
-                self.filename = "my_cashbacks.json"
-                with open(self.filename, "w", encoding="utf-8") as f:
-                    json.dump(self.cashbacks, f, indent=2, ensure_ascii=False)
-                print(
-                    f"Name changed to my_cashbacks.json due to an error {type(e).__name__}"
-                )
-            except Exception as backup_error:
-                print(f"Error! Failed to save data: {type(backup_error).__name__}")
-                return
+                json.dump(self.data, f, indent=4, ensure_ascii=False)
+        except OSError:
+            pass
 
-    def bank_exists(self, bank_name: str, cashback_name: str) -> bool:
-        if bank_name not in self.cashbacks:
-            return False
-
-        return any(
-            cb.lower() == cashback_name.lower() for cb in self.cashbacks[bank_name]
-        )
-
-    def get_valid_input(self, prompt: str) -> float:
-        while True:
-            try:
-                value: float = float(input(prompt))
-                if value < 0.01:
-                    raise ValueError
-                return value
-
-            except ValueError:
-                print("Error! Please enter a positive number.")
-
-    def add_cashback(self) -> None:
-        print("\n" + "=" * 40)
-        print("ADD NEW CASHBACK")
-        print("=" * 40)
-
-        while True:
-            bank: str = input("Bank name: ").strip()
-            if not bank:
-                print("The bank name cannot be empty.")
-                continue
-            break
-
-        while True:
-            cashback: str = input("Cashback: ").strip()
-
-            if not cashback:
-                print("The cashback cannot be empty.")
-                continue
-
-            if self.bank_exists(bank, cashback):
-                print(f"Cashback '{cashback}' is already in the {bank}")
-
-                overwrite: str = input("Replace existing cashback? (yes/no): ").lower()
-                if overwrite in self.confirmations:
-                    self.cashbacks[bank] = {
-                        k: v
-                        for k, v in self.cashbacks.get(bank, {}).items()
-                        if k.lower() != cashback.lower()
-                    }
-                    break
-                else:
-                    continue
-            else:
-                break
-
-        percent: float = self.get_valid_input("Percent (%): ")
-
-        if bank not in self.cashbacks:
-            self.cashbacks[bank] = {}
-
-        self.cashbacks[bank][cashback] = percent
-        self.save_data()
-        print(f"\nAdded cashback: {cashback} with percent {percent}% in {bank}")
-
-    def edit_cashback(self) -> None:
-        is_changed: bool = False
-        self.show_all()
-
-        if not self.cashbacks:
-            return
-
-        while True:
-            try:
-                while True:
-                    bank: str = input("\nBank name to edit: ")
-
-                    if bank not in self.cashbacks:
-                        print("Invalid name")
-                    else:
-                        break
-
-                while True:
-                    category: str = input("\nCashback name to edit: ")
-
-                    if category not in self.cashbacks[bank]:
-                        print("Invalid cashback")
-                    else:
-                        break
-
-                cashback = self.cashbacks[bank]
-                print(f"\nEditing cashback: {category} in {bank}")
-                print(f"Current percent: {cashback[category]}%")
-                print("-" * 40)
-
-                change_percent: str = input("Change rate? (yes/no): ").lower()
-                if change_percent in self.confirmations:
-                    is_changed = True
-                    new_percent: float = self.get_valid_input(
-                        f"New percent (current {cashback[category]}%): "
-                    )
-                    cashback[category] = new_percent
-
-                self.save_data()
-                if is_changed:
-                    print("\nCashback updated!")
-                    print(f"New percent: {cashback[category]}")
-                else:
-                    print("\nCashback remains unchanged!")
-                return
-
-            except ValueError:
-                print("Error! Enter a string")
-
-    def show_all(self) -> None:
-        if not self.cashbacks:
-            print("\nNo saved cashbacks")
-            return
-
-        print("\n" + "=" * 40)
-        print("YOUR CASHBACKS")
-        print("=" * 40)
-
-        for bank, cashbacks in self.cashbacks.items():
-            print(bank)
-            for cashback, percent in cashbacks.items():
-                print(f"   {cashback}: {percent}%")
-            print()
-
-        print("=" * 40)
-        print(
-            f"Total cashbacks: {sum(len(cashbacks) for cashbacks in self.cashbacks.values())}"
-        )
-
-    def find_cashback(self):
-        cashbacks_category: list = []
-        while True:
-            data: str = input("Cashback: ").strip()
-
-            if not data:
-                print("The cashback cannot be empty.")
-                continue
-
-            if any(
-                cb.lower() == data.lower()
-                for bank in self.cashbacks
-                for cb in self.cashbacks[bank]
-            ):
-                for bank, cashbacks in self.cashbacks.items():
-                    for cashback, percent in cashbacks.items():
-                        if cashback == data:
-                            cashbacks_category.append((bank, cashback, percent))
-                print(
-                    *(
-                        f"{item[0]}  {item[1]}  {item[2]}"
-                        for item in sorted(
-                            cashbacks_category, key=lambda item: item[2], reverse=True
-                        )
-                    ),
-                    sep="\n",
-                )
-                break
-            else:
-                print(f"Cashback '{data}' not found")
-                break
-
-    def delete_cashback(self) -> None:
-        self.show_all()
-
-        if not self.cashbacks:
-            return
-
-        while True:
-            try:
-                while True:
-                    bank: str = input("Bank name: ").strip()
-                    if bank in self.cashbacks:
-                        while True:
-                            category: str = input("Cashback name: ").strip()
-                            if category in self.cashbacks[bank]:
-                                confirm: str = (
-                                    input("\nAre you sure? (yes/no): ").strip().lower()
-                                )
-                                if confirm not in self.confirmations:
-                                    print("Deletion canceled")
-                                    return
-                                del self.cashbacks[bank][category]
-                                if not self.cashbacks[bank]:
-                                    del self.cashbacks[bank]
-                                self.save_data()
-                                if not self.cashbacks:
-                                    try:
-                                        os.remove(self.filename)
-                                    except OSError as e:
-                                        print(f"Failed to delete file {self.filename}: {e}")
-                                        return
-                                print(f"\nDeleted cashback: {category} in {bank}")
-                                print(f"Remaining cashbacks: {sum(len(c) for c in self.cashbacks.values())}")
-                                return
-                            else:
-                                print("Invalid category")
-                    else:
-                        print("Invalid bank")
-            except ValueError:
-                print("Error! Enter a str")
-
-    def delete_bank(self) -> None:
-        self.show_all()
-
-        if not self.cashbacks:
-            return
-
-        while True:
-            try:
-                while True:
-                    bank: str = input("Bank name: ").strip()
-                    if bank in self.cashbacks:
-                        confirm: str = (
-                            input("\nAre you sure? (yes/no): ").strip().lower()
-                        )
-                        if confirm not in self.confirmations:
-                            print("Deletion canceled")
-                            return
-                        del self.cashbacks[bank]
-                        self.save_data()
-                        if not self.cashbacks:
-                            try:
-                                os.remove(self.filename)
-                            except OSError as e:
-                                print(f"Failed to delete file {self.filename}: {e}")
-                                return
-                        print(f"\nDeleted bank: {bank}")
-                        print(f"Remaining bank: {len(self.cashbacks)}")
-                        return
-                    else:
-                        print("Invalid bank")
-            except ValueError:
-                print("Error! Enter a str")
-
-    def clear_all(self) -> None:
-        if not self.cashbacks and not os.path.exists(self.filename):
-            print("\nNo saved cashbacks")
-            return
-
-        print("\n" + "=" * 50)
-        print("DELETING ALL CASHBACKS")
-        print("=" * 50)
-        print(f"Number of cashbacks: {sum(len(cashbacks) for cashbacks in self.cashbacks.values())}")
-        print("\nList of banks for deletion:")
-
-        for bank, cashbacks in self.cashbacks.items():
-            print(f"  {bank}")
-            for cashback in cashbacks:
-                print(f"    {cashback}")
-
-        print("\n" + "=" * 50)
-        print("This action is IRREVERSIBLE!")
-        print("All data will be deleted without the possibility of recovery!")
-        print("=" * 50)
-
-        confirm: str = input("\nAre you sure? (yes/no): ").strip().lower()
-        if confirm not in self.confirmations:
-            print("Deletion canceled")
-            return
-
-        self.cashbacks = {}
-
-        print("\n" + "✖" * 50)
-        print("ALL CASHBACKS DELETED")
-        print("✖" * 50)
+    def delete_file(self):
         try:
             os.remove(self.filename)
-            print(f"Data file deleted: {self.filename}")
-        except OSError as e:
-            print(f"Failed to delete file {self.filename}: {e}")
-        print("✖" * 50)
+        except OSError:
+            pass
 
-    def run(self) -> None:
+
+class CashbackManager:
+    def __init__(self, storage: DataStorage):
+        self.storage = storage
+
+    def add_cashback(self, bank: str, cashback: Cashback):
+        if bank not in self.storage.data:
+            self.storage.data[bank] = {}
+        self.storage.data[bank][cashback.name] = cashback.percent
+        self.storage.save()
+
+    def find_cashback(self, cashback_name: str):
+        results = []
+        for bank, cashbacks in self.storage.data.items():
+            for name, percent in cashbacks.items():
+                if name.lower() == cashback_name.lower():
+                    results.append((bank, name, percent))
+        return sorted(results, key=lambda x: x[2], reverse=True)
+
+    def delete_cashback(self, bank: str, cashback_name: str):
+        if bank in self.storage.data and cashback_name in self.storage.data[bank]:
+            del self.storage.data[bank][cashback_name]
+            if not self.storage.data[bank]:
+                del self.storage.data[bank]
+            self.storage.save()
+            if not self.storage.data:
+                self.clear_all()
+
+    def delete_bank(self, bank: str):
+        if bank in self.storage.data:
+            del self.storage.data[bank]
+        self.storage.save()
+        if not self.storage.data:
+            self.clear_all()
+
+    def clear_all(self):
+        self.storage.data.clear()
+        self.storage.delete_file()
+
+
+class CUI:
+    def __init__(self, manager: CashbackManager):
+        self.manager = manager
+        self.confirmations = ["yes", "y"]
+
+    def prompt_float(self, message: str) -> float:
+        while True:
+            try:
+                value = float(input(message))
+                if value <= 0:
+                    raise ValueError
+                return value
+            except ValueError:
+                print("Enter a positive number")
+
+    def main_menu(self):
         menu_actions = {
             "1": ("Add cashback", self.add_cashback),
             "2": ("Show all cashbacks", self.show_all),
@@ -320,35 +100,116 @@ class ConsoleCashbackApp:
             "5": ("Delete cashback", self.delete_cashback),
             "6": ("Delete bank", self.delete_bank),
             "7": ("Delete ALL", self.clear_all),
-            "8": ("Exit", None),
+            "8": ("Exit", self.exit_program),
         }
 
         while True:
-            print("\n" + "=" * 40)
+            print("\n" + "-" * 40)
             print("CASHBACK MANAGER")
-            print("=" * 40)
+            print("-" * 40)
 
             for key, (text, _) in menu_actions.items():
                 print(f"{key}. {text}")
 
-            print("=" * 40)
+            print("-" * 40)
 
-            choice: str = input("Select (1-8): ").strip()
-
-            if choice == "8":
-                print("\nData saved.")
-                print("Goodbye!")
-                break
-
-            if choice in menu_actions:
-                _, action = menu_actions[choice]
-                if action:
-                    action()
-
+            choice = input("Select an option (1-8): ").strip()
+            action = menu_actions.get(choice)
+            if action:
+                action[1]()
             else:
-                print("Error! Select a number from 1 to 8")
+                print("Enter a number from 1 to 8")
+
+    def add_cashback(self):
+        bank = input("Bank name: ").strip()
+        cashback_name = input("Cashback name: ").strip()
+        existing = self.manager.storage.data.get(bank, {}).get(cashback_name)
+        if existing:
+            confirm = input(
+                f"Cashback '{cashback_name}' already exists in {bank}. Replace? (yes/no): "
+            ).lower()
+            if confirm not in self.confirmations:
+                return
+        percent = self.prompt_float("percent (%): ")
+        self.manager.add_cashback(bank, Cashback(cashback_name, percent))
+        print(f"Cashback '{cashback_name}' in '{bank}' added with {percent}%.")
+
+    def show_all(self):
+        data = self.manager.storage.data
+        if not data:
+            print("No data")
+            return
+        for bank, cashbacks in data.items():
+            print(f"\n{bank}")
+            for name, percent in cashbacks.items():
+                print(f"  {name}: {percent}%")
+        print(f"\nTotal cashbacks: {sum(len(c) for c in data.values())}")
+
+    def find_cashback(self):
+        name = input("Enter cashback name to search: ").strip()
+        results = self.manager.find_cashback(name)
+        if results:
+            print(f"Results ({len(results)}):")
+            for bank, name, percent in results:
+                print(f"{bank}   {name}: {percent}%")
+        else:
+            print("Cashback not found")
+
+    def delete_cashback(self):
+        bank = input("Bank name: ").strip()
+        cashback_name = input("Cashback name: ").strip()
+        self.manager.delete_cashback(bank, cashback_name)
+        print(f"Cashback '{cashback_name}' from '{bank}' deleted.")
+
+    def delete_bank(self):
+        bank = input("Bank name: ").strip()
+        self.manager.delete_bank(bank)
+        print(f"Bank '{bank}' deleted")
+
+    def clear_all(self):
+        confirm = input("Are you sure? (yes/no): ").lower()
+        if confirm in self.confirmations:
+            self.manager.clear_all()
+            print("Cleared")
+
+    def edit_cashback(self):
+        data = self.manager.storage.data
+        if not data:
+            print("No data")
+            return
+
+        self.show_all()
+
+        bank = input("\nEnter the bank name to edit: ").strip()
+        if bank not in data:
+            print(f"Bank '{bank}' not found.")
+            return
+
+        category = input("\nEnter the cashback name to edit: ").strip()
+        if category not in data[bank]:
+            print(f"Cashback '{category}' not found in '{bank}'.")
+            return
+
+        current_percent = data[bank][category]
+        print(f"\nEditing cashback '{category}' in '{bank}'")
+        print(f"Current percent: {current_percent}%")
+        print("-" * 40)
+
+        if input("Change the rate? (yes/no): ").strip().lower() in self.confirmations:
+            new_percent = self.prompt_float(f"Enter percent: ")
+            data[bank][category] = new_percent
+            self.manager.storage.save()
+            print(f"\n'{category}' in '{bank}' updated to {new_percent}%.")
+        else:
+            print("Canceled")
+
+    def exit_program(self):
+        print("Bye")
+        exit()
 
 
 if __name__ == "__main__":
-    app = ConsoleCashbackApp(input("Enter the name for the file: "))
-    app.run()
+    storage = DataStorage(input("Enter filename: ").strip())
+    manager = CashbackManager(storage)
+    ui = CUI(manager)
+    ui.main_menu()
