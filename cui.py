@@ -24,11 +24,12 @@ class CUI:
         options = {
             "1": ("Add cashback", self.add_cashback),
             "2": ("Show all cashbacks", self.show_all),
-            "3": ("Find cashback", self.find_cashback),
-            "4": ("Delete cashback", self.delete_cashback),
-            "5": ("Delete bank", self.delete_bank),
-            "6": ("Clear all", self.clear_all),
-            "7": ("Exit", self.exit)
+            "3": ("Edit cashback", self.edit_cashback),
+            "4": ("Find cashback", self.find_cashback),
+            "5": ("Delete cashback", self.delete_cashback),
+            "6": ("Delete bank", self.delete_bank),
+            "7": ("Clear all", self.clear_all),
+            "8": ("Exit", self.exit)
         }
 
         while True:
@@ -37,7 +38,7 @@ class CUI:
             print("-"*30)
             for key, (desc, _) in options.items():
                 print(f"{key}. {desc}")
-            choice = input("Select num 1-7").strip()
+            choice = input("Select num 1-8").strip()
             action = options.get(choice)
             if action:
                 try:
@@ -45,7 +46,7 @@ class CUI:
                 except Exception as e:
                     print(f"Error: {e}")
             else:
-                print("Enter num 1-7")
+                print("Enter num 1-8")
 
     def add_cashback(self):
         try:
@@ -89,6 +90,19 @@ class CUI:
                 print("Cashback not found")
         except Exception as e:
             print(f"Error: {e}")
+
+    def edit_cashback(self):
+    try:
+        bank = input("Bank name: ").strip()
+        cashback_name = input("Cashback name: ").strip()
+        if bank not in self.storage.data or cashback_name not in self.storage.data[bank]:
+            print("Cashback not found")
+            return
+        new_percent = self.prompt_float("New percent: ")
+        self.manager.edit_cashback(bank, cashback_name, new_percent)
+        print(f"Cashback '{cashback_name}' in '{bank}' updated to {new_percent}%")
+    except Exception as e:
+        print(f"Error: {e}")
 
     def delete_cashback(self):
         try:
