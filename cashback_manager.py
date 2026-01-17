@@ -238,3 +238,4 @@ if __name__ == "__main__":
     manager = CashbackManager(storage)
     ui = CUI(manager)
     ui.main_menu()
+#
