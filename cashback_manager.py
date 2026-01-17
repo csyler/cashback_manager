@@ -56,24 +56,47 @@ class CashbackManager:
         return sorted(results, key=lambda x: x[2], reverse=True)
 
     def delete_cashback(self, bank: str, cashback_name: str):
-        if bank in self.storage.data and cashback_name in self.storage.data[bank]:
-            del self.storage.data[bank][cashback_name]
-            if not self.storage.data[bank]:
-                del self.storage.data[bank]
-            self.storage.save()
-            if not self.storage.data:
-                self.clear_all()
+        if bank in self.storage.data:
+            if cashback_name in self.storage.data[bank]:
+                del self.storage.data[bank][cashback_name]
+                if not self.storage.data[bank]:
+                    del self.storage.data[bank]
+                self.storage.save()
+                if not self.storage.data:
+                    self.storage.data.clear()
+                    self.storage.delete_file()
+                    print(
+                        f"Cashback '{cashback_name}' deleted from '{bank}' and cleared"
+                    )
+                else:
+                    print(f"Cashback '{cashback_name}' deleted from '{bank}'")
+            else:
+                print(f"Cashback '{cashback_name}' not found in '{bank}'")
+                return
+        else:
+            print(f"Bank '{bank}' does not exist")
+            return
 
     def delete_bank(self, bank: str):
-        if bank in self.storage.data:
-            del self.storage.data[bank]
+        if bank not in self.storage.data:
+            print(f"Not exist")
+            return
+        del self.storage.data[bank]
         self.storage.save()
         if not self.storage.data:
-            self.clear_all()
+            self.storage.data.clear()
+            self.storage.delete_file()
+            print("Cleared")
+        else:
+            print(f"Bank '{bank}' deleted")
 
     def clear_all(self):
-        self.storage.data.clear()
-        self.storage.delete_file()
+        if not self.storage.data:
+            print("Nothing to clear")
+        else:
+            self.storage.data.clear()
+            self.storage.delete_file()
+            print("Cleared")
 
 
 class CUI:
@@ -158,19 +181,20 @@ class CUI:
     def delete_cashback(self):
         bank = input("Bank name: ").strip()
         cashback_name = input("Cashback name: ").strip()
-        self.manager.delete_cashback(bank, cashback_name)
-        print(f"Cashback '{cashback_name}' from '{bank}' deleted.")
+        confirm = input("Are you sure? (yes/no): ").lower()
+        if confirm in self.confirmations:
+            self.manager.delete_cashback(bank, cashback_name)
 
     def delete_bank(self):
         bank = input("Bank name: ").strip()
-        self.manager.delete_bank(bank)
-        print(f"Bank '{bank}' deleted")
+        confirm = input("Are you sure? (yes/no): ").lower()
+        if confirm in self.confirmations:
+            self.manager.delete_bank(bank)
 
     def clear_all(self):
         confirm = input("Are you sure? (yes/no): ").lower()
         if confirm in self.confirmations:
             self.manager.clear_all()
-            print("Cleared")
 
     def edit_cashback(self):
         data = self.manager.storage.data
