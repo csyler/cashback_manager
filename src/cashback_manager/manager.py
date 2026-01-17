@@ -21,6 +21,14 @@ class CashbackManager:
                     results.append((bank, name, percent))
         return sorted(results, key=lambda x: x[2], reverse=True)
 
+    def edit_cashback(self, bank, cashback_name, new_percent):
+        if bank not in self.storage.data:
+            raise ValueError(f"Bank '{bank}' does not exist")
+        if cashback_name not in self.storage.data[bank]:
+            raise ValueError(f"Cashback '{cashback_name}' not found in '{bank}'.")
+        self.storage.data[bank][cashback_name] = new_percent
+        self.storage.save()
+
     def delete_cashback(self, bank, cashback_name):
         if bank not in self.storage.data:
             raise ValueError(f"Bank '{bank}' does not exist")
