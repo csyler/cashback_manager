@@ -15,11 +15,11 @@ class CUI:
             try:
                 value = float(input(message))
                 if value <= 0:
-                    print("Enter a positive number")
+                    print("Enter a positive number ")
                     continue
                 return value
             except ValueError:
-                print("Please enter a number")
+                print("Please enter a number ")
 
     def main_menu(self):
         options = {
@@ -39,7 +39,7 @@ class CUI:
             print("-" * 30)
             for key, (desc, _) in options.items():
                 print(f"{key}. {desc}")
-            choice = input("Select num 1-8").strip()
+            choice = input("Select num 1-8 ").strip()
             action = options.get(choice)
             if action:
                 try:
@@ -47,7 +47,7 @@ class CUI:
                 except Exception as e:
                     print(f"Error: {e}")
             else:
-                print("Enter num 1-8")
+                print("Enter num 1-8 ")
 
     def add_cashback(self):
         try:
