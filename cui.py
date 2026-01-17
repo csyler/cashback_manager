@@ -92,17 +92,17 @@ class CUI:
             print(f"Error: {e}")
 
     def edit_cashback(self):
-    try:
-        bank = input("Bank name: ").strip()
-        cashback_name = input("Cashback name: ").strip()
-        if bank not in self.storage.data or cashback_name not in self.storage.data[bank]:
-            print("Cashback not found")
-            return
-        new_percent = self.prompt_float("New percent: ")
-        self.manager.edit_cashback(bank, cashback_name, new_percent)
-        print(f"Cashback '{cashback_name}' in '{bank}' updated to {new_percent}%")
-    except Exception as e:
-        print(f"Error: {e}")
+        try:
+            bank = input("Bank name: ").strip()
+            cashback_name = input("Cashback name: ").strip()
+            if bank not in self.storage.data or cashback_name not in self.storage.data[bank]:
+                print("Cashback not found")
+                return
+            new_percent = self.prompt_float("New percent: ")
+            self.manager.edit_cashback(bank, cashback_name, new_percent)
+            print(f"Cashback '{cashback_name}' in '{bank}' updated to {new_percent}%")
+        except Exception as e:
+            print(f"Error: {e}")
 
     def delete_cashback(self):
         try:
