@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "cashback_manager"
+version = "0.1.0"
+description = "Cashback Manager CUI application"
+authors = ["csyler <lea27057@gmail.com>"]
+license = "MIT"
+packages = [
+    { include = "cashback_manager" }
+]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+
+[tool.poetry.dev-dependencies]
+pytest = "^7.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
