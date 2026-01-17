@@ -41,6 +41,10 @@ class CashbackManager:
     def __init__(self, storage: DataStorage):
         self.storage = storage
 
+    def _clear_storage(self):
+        self.storage.data.clear()
+        self.storage.delete_file()
+
     def add_cashback(self, bank: str, cashback: Cashback):
         if bank not in self.storage.data:
             self.storage.data[bank] = {}
@@ -63,8 +67,7 @@ class CashbackManager:
                     del self.storage.data[bank]
                 self.storage.save()
                 if not self.storage.data:
-                    self.storage.data.clear()
-                    self.storage.delete_file()
+                    self._clear_storage()
                     print(
                         f"Cashback '{cashback_name}' deleted from '{bank}' and cleared"
                     )
@@ -84,8 +87,7 @@ class CashbackManager:
         del self.storage.data[bank]
         self.storage.save()
         if not self.storage.data:
-            self.storage.data.clear()
-            self.storage.delete_file()
+            self._clear_storage()
             print("Cleared")
         else:
             print(f"Bank '{bank}' deleted")
@@ -94,8 +96,7 @@ class CashbackManager:
         if not self.storage.data:
             print("Nothing to clear")
         else:
-            self.storage.data.clear()
-            self.storage.delete_file()
+            self._clear_storage()
             print("Cleared")
 
 
